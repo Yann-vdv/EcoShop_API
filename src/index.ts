@@ -24,7 +24,11 @@ app.listen(port, () => {
 // products requests :
 
 app.get("/product", async (req, res) => {
-    connection.query("SELECT * FROM product", (error, results) => {
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+    const query = "SELECT * FROM product LIMIT ?,?";
+    connection.query(query,[offset,limit], (error, results) => {
         res.status(200).json(results);
     });
 });
@@ -41,8 +45,11 @@ app.get("/product/:id", async (req, res) => {
 });
 
 app.get("/product/category/:category", async (req, res) => {
-    const query = "SELECT * FROM product LEFT JOIN category ON product.category = category.id WHERE category.id = ?";
-    connection.query(query, [req.params.category], (error, results) => {
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+    const query = "SELECT * FROM product LEFT JOIN category ON product.category = category.id WHERE category.id = ? LIMIT ?,?";
+    connection.query(query, [req.params.category,offset,limit], (error, results) => {
         res.status(200).json(results);
     });
 });
