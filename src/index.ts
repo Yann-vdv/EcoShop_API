@@ -1,6 +1,9 @@
 import express from "express";
 import bodyParser from "body-parser";
 import connection from "./database";
+import sharp from "sharp";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 
@@ -21,7 +24,7 @@ app.listen(port, () => {
     console.log(`Ecoute le port ${port}`);
 });
 
-// products requests :
+//Product requests :
 
 app.get("/product", async (req, res) => {
     const page = parseInt(req.query.page as string, 10) || 1;
@@ -54,7 +57,7 @@ app.get("/product/category/:category", async (req, res) => {
     });
 });
 
-// category requests :
+//Category requests :
 
 app.get("/category", async (req, res) => {
     connection.query("SELECT * FROM category", (error, results) => {
@@ -72,3 +75,57 @@ app.get("/category/:id", async (req, res) => {
         }
     });
 });
+
+//Images :
+
+app.use(express.static('public'));
+
+//   Méthode avec stockage local des images après avoir modifié la taille (econnomie calcul mais prend plus de place)
+//   app.get('/image/:imageName', async (req, res) => {
+//     const imageName = req.params.imageName;
+//     const imagePath = `public/images/${imageName}`;
+//     const resizedImagePath = `public/resized/${imageName}`;
+  
+//     if (fs.existsSync(imagePath)) {
+//       await sharp(imagePath)
+//         .resize(300, 300)
+//         .toFile(resizedImagePath);
+  
+//       res.sendFile(resizedImagePath);
+//     } else {
+//       res.status(404).json({ error: 'Image not found' });
+//     }
+//   })
+
+app.get('/image/:imgName', async (req, res) => {
+    const imgName = req.params.imgName;
+    const width = parseInt(req.query.width as string) || 400;
+    const height = parseInt(req.query.height as string) || 400;
+    const imgPath = path.resolve(`public/images/${imgName}`);
+  
+    if (fs.existsSync(imgPath)) {
+      sharp(imgPath)
+        .resize(width, height)
+        .toBuffer((err, buffer) => {
+          if (err) {
+            return res.status(500).json({ error: 'Internal Server Error' });
+          }
+  
+          res.type('image/png');
+          res.end(buffer);
+        });
+    } else {
+      res.status(404).json({ error: 'Image not found' });
+    }
+  });
+  
+  app.get('/imageOrigin/:imgName', async (req, res) => {
+    const imgName = req.params.imgName;
+    const imgPath = path.resolve(`public/images/${imgName}`);
+  
+    if (fs.existsSync(imgPath)) {
+        res.sendFile(imgPath);
+    } else {
+      res.status(404).json({ error: 'Image not found' });
+    }
+  });
