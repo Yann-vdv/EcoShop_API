@@ -26,6 +26,16 @@ app.listen(port, () => {
 
 //Product requests :
 
+app.get("/productCount", async (req, res) => {
+    connection.query("SELECT COUNT(*) FROM product", (error, results) => {
+        if (error) {
+            res.status(400).json(error);
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
 app.get("/product", async (req, res) => {
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 10;
@@ -46,6 +56,25 @@ app.get("/product/:id", async (req, res) => {
         }
     });
 });
+
+app.put("product/:id/order", async (req, res) => {
+    const getQuantityQuerry = "SELECT quantity FROM product WHERE id = ?";
+    connection.query(getQuantityQuerry, [req.params.id], (error, results1) => {
+        if (!results1) {
+            res.status(204).json({ response: "Ce produit n'existe pas" });
+        } else {
+            const query = "UPDATE product SET quantity = ? WHERE product.id = ?;"
+            const newQuantity = parseInt(results1[0]) - 1;
+            connection.query(query, [newQuantity,req.params.id], (error, results) => {
+                if (!results) {
+                    res.status(204).json({ response: "Ce produit n'existe pas" });
+                } else {
+                    res.status(200).json(results[0]);
+                }
+            });
+        }
+    });
+})
 
 app.get("/product/category/:category", async (req, res) => {
     const page = parseInt(req.query.page as string, 10) || 1;
