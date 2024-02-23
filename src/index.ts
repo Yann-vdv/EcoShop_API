@@ -27,11 +27,11 @@ app.listen(port, () => {
 //Product requests :
 
 app.get("/productCount", async (req, res) => {
-    connection.query("SELECT COUNT(*) FROM product", (error, results) => {
+    connection.query("SELECT COUNT(*) AS count FROM product", (error, results) => {
         if (error) {
             res.status(400).json(error);
         } else {
-            res.status(200).json(results);
+            res.status(200).json(results[0]);
         }
     });
 });
