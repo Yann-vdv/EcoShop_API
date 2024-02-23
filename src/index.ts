@@ -65,13 +65,17 @@ app.put("product/:id/order", async (req, res) => {
         } else {
             const query = "UPDATE product SET quantity = ? WHERE product.id = ?;"
             const newQuantity = parseInt(results1[0]) - 1;
-            connection.query(query, [newQuantity,req.params.id], (error, results) => {
-                if (!results) {
-                    res.status(204).json({ response: "Ce produit n'existe pas" });
-                } else {
-                    res.status(200).json(results[0]);
-                }
-            });
+            if (newQuantity >= 0) {
+                connection.query(query, [newQuantity,req.params.id], (error, results) => {
+                    if (!results) {
+                        res.status(204).json({ response: "Ce produit n'existe pas" });
+                    } else {
+                        res.status(200).json(results[0]);
+                    }
+                });
+            } else {
+                res.status(400).json({ response: "Ce produit n'est déjà plus disponible" });
+            }
         }
     });
 })
